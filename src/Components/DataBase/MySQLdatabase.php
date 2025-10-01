@@ -1,5 +1,10 @@
 <?php
-
+/**
+ * MySQL database class implementing Database interface
+ * @author Emanuel Santacruz
+ * @version 1.0
+ */
+require_once __DIR__ . '/../../Core/interfaces/Database.php';
 class MySQLdatabase implements Database{
     private PDO $pdo;
     
@@ -8,14 +13,35 @@ class MySQLdatabase implements Database{
     }
 
     /**
-     * Ejecuta una consulta sql (PUT, UPDTAE, DELET)
-     * @param
+     * select sql query
+     * @param array $conditions Conditions of the query. Format [colname => [op, val]]
+     *              Example ['role' => ['=', 7]]
      * @return 
     */
-    public function ejecutar(string $sql, array $params = []): void {
+    public function find(string $table, array $columns = ['*'] ,array $conditions = []): array {
         try{
+            $cols = implode(',', $columns);
+            $sql = "SELECT $cols FROM $table";
+            $params = [];
+            // create where clause if conditions exist
+            if(!empty($conditions)){
+                $where = [];
+                foreach($conditions as $col => [$op, $val]){
+                    $where[] = "$col $op :cond_$col";
+                    $params[":cond_$col"] = $val;
+                }
+                $sql .= ' WHERE ' . implode(' AND ' ,$where);
+            }
             $stmt = $this->pdo->prepare($sql);
             $stmt->execute($params);
+            $roles = $stmt->fetchall(PDO::FETCH_ASSOC); 
+            if(!empty($roles)){
+                return $roles;               
+            } else{
+                return ['no se encontraron registros que cumplan las condiciones (revise las condiciones)']; 
+
+            }
+ 
         }catch(PDOException $e){
             throw $e;
         }
@@ -23,13 +49,81 @@ class MySQLdatabase implements Database{
     }
 
     /**
-     * 
+     * Insert sql query
+     * @param string $table
+     * @param array $data Datas to insert format [colname => value]
+     *              example ['roles' => 'admin']
+     * @return
     */
-    public function consultar(string $sql, array $params = []): array {
+    public function insert(string $table, array $data): bool {
         try{
+            $cols = implode(',', array_keys($data)); 
+            $placeholders = ':' . implode(', :', array_keys($data));
+            $sql = "INSERT INTO $table($cols) VALUES ($placeholders)";
             $stmt = $this->pdo->prepare($sql);
-            $stmt->execute($params);
-            return $stmt->fetchall(PDO::FETCH_ASSOC);
+            return $stmt->execute($data);
+        }catch(PDOException $e){
+            throw $e;
+            // return false;
+        }
+    }
+
+    /**
+     * Update sql query
+     * @param   
+     * @return
+    */
+    public function update(string $table, array $data, array $conditions): bool{
+        try{
+            $set = [];
+            $params = [];
+            $sql = "UPDATE $table ";
+            // SET clause format
+            foreach($data as $col => $val){$set[] = "$col = :$col";}
+            $sql .= 'SET ' . implode(', ', $set);
+
+            // create where clause format if conditions exist
+            if(!empty($conditions)){
+                $where = [];
+                foreach($conditions as $col => [$op, $val]){
+                    $where[] = "$col $op :cond_$col"; 
+                    $params[":cond_$col"] = $val;
+                }
+                $sql .= ' WHERE ' . implode(' AND ', $where);
+            }
+            foreach($data as $col => $val){$params[":$col"] = $val;}
+            $stmt = $this->pdo->prepare($sql);
+            return $stmt->execute($params);
+        }catch(PDOException $e){
+            throw $e;
+        }
+    }
+
+    /**
+     * Delete sql query
+     * @param
+     * @return
+     */
+    public function delete(String $table, array $conditions = []): bool {
+        try{
+            //where clause if conditions is not empty
+            if(!empty($conditions)){
+                $sql = "DELETE FROM $table";
+                $where = [];
+                $params = [];
+                foreach($conditions as $col => [$op, $val]){
+                    $where[] = "$col $op :cond_$col";
+                    $params[":cond_$col"] = $val; 
+                }
+                $sql .= ' WHERE ' . implode(' AND ', $where);
+                $stmt = $this->pdo->prepare($sql);
+                return $stmt->execute($params);
+            }else{
+                echo "Error - Can't delete without conditions";
+                return false;
+            }
+            // where clause
+            
         }catch(PDOException $e){
             throw $e;
         }
