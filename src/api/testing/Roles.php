@@ -6,21 +6,24 @@ error_reporting(E_ALL);
 
 require_once __DIR__ . '/../../Config/connection.php';
 require_once __DIR__ . '/../../utils/Response.php';
+require_once __DIR__ . '/../../utils/validator.php';
+
 $url = $_SERVER['REQUEST_URI'];
 $route = explode('/', $url);
 $json = json_decode(file_get_contents('php://input'), true);
 $file = isset($json['file']) ? $json['file'] : null;
+$val = new Validator();
 
 function pull($route1, $route2){
     require_once __DIR__ . $route1;
     require_once __DIR__ . $route2;    
 }
 
-function objs($manager, $db){
+function objs($manager, $db, $val){
     $repoClass = $manager . 'Repository';
     $managerClass = $manager . 'Manager';
     $repo = new $repoClass($db);
-    $manager = new $managerClass($repo); 
+    $manager = new $managerClass($repo, $val); 
     return $manager;
 }
 
@@ -44,7 +47,7 @@ switch($file){
         exit;
 }
 
-$manager = objs($file, $db);
+$manager = objs($file, $db, $val);
 $method = $_SERVER["REQUEST_METHOD"];
 
 /**
