@@ -21,19 +21,17 @@ class MySQLdatabase implements Database{
     public function find(string $table, array $columns = ['*'] ,array $conditions = []): array {
         try{
             $cols = implode(',', $columns);
-            $sql = "SELECT $cols FROM $table";
+            $sltClause = "SELECT $cols FROM $table";
             $params = [];
             // create where clause if conditions exist
             if(!empty($conditions)){
-                $where = [];
-                foreach($conditions as $col => [$op, $val]){
-                    $where[] = "$col $op :cond_$col";
-                    $params[":cond_$col"] = $val;
-                }
-                $sql .= ' WHERE ' . implode(' AND ' ,$where);
+                $sql = $this->whereClause($sltClause, $conditions, $params);
+                $stmt = $this->pdo->prepare($sql[0]);
+                $stmt->execute($sql[1]);
+            }else{
+                $stmt = $this->pdo->prepare($sltClause);
+                $stmt->execute($params);
             }
-            $stmt = $this->pdo->prepare($sql);
-            $stmt->execute($params);
             $roles = $stmt->fetchall(PDO::FETCH_ASSOC); 
             if(!empty($roles)){
                 return $roles;               
@@ -77,23 +75,18 @@ class MySQLdatabase implements Database{
         try{
             $set = [];
             $params = [];
-            $sql = "UPDATE $table ";
+            $setClause = "UPDATE $table ";
             // SET clause format
             foreach($data as $col => $val){$set[] = "$col = :$col";}
-            $sql .= 'SET ' . implode(', ', $set);
+            $setClause .= 'SET ' . implode(', ', $set);
 
             // create where clause format if conditions exist
             if(!empty($conditions)){
-                $where = [];
-                foreach($conditions as $col => [$op, $val]){
-                    $where[] = "$col $op :cond_$col"; 
-                    $params[":cond_$col"] = $val;
-                }
-                $sql .= ' WHERE ' . implode(' AND ', $where);
+                $sql = $this->whereClause($setClause, $conditions, $params);
             }
-            foreach($data as $col => $val){$params[":$col"] = $val;}
-            $stmt = $this->pdo->prepare($sql);
-            return $stmt->execute($params);
+            foreach($data as $col => $val){$sql[1][":$col"] = $val;}
+            $stmt = $this->pdo->prepare($sql[0]);
+            return $stmt->execute($sql[1]);
         }catch(PDOException $e){
             throw $e;
         }
@@ -108,16 +101,13 @@ class MySQLdatabase implements Database{
         try{
             //where clause if conditions is not empty
             if(!empty($conditions)){
-                $sql = "DELETE FROM $table";
-                $where = [];
+                $delClause = "DELETE FROM $table";
                 $params = [];
-                foreach($conditions as $col => [$op, $val]){
-                    $where[] = "$col $op :cond_$col";
-                    $params[":cond_$col"] = $val; 
-                }
-                $sql .= ' WHERE ' . implode(' AND ', $where);
-                $stmt = $this->pdo->prepare($sql);
-                return $stmt->execute($params);
+                $sql =  $this->whereClause($delClause, $conditions, $params);
+                $stmt = $this->pdo->prepare($sql[0]);
+                $stmt->execute($sql[1]);
+                if($stmt->rowCount() == 0) return false;
+                return $stmt;
             }else{
                 echo "Error - Can't delete without conditions";
                 return false;
@@ -127,5 +117,18 @@ class MySQLdatabase implements Database{
         }catch(PDOException $e){
             throw $e;
         }
+    }
+
+    /**
+     * Consstruct a where section of a query, with dinamic conditions
+     */
+    private function whereClause(string $sql, array $conditions, array $params): array{
+        $where = [];
+        foreach($conditions as $col => [$op, $val]){
+            $where[] = "$col $op :cond_$col";
+            $params[":cond_$col"] = $val; 
+        }
+        $sql .= ' WHERE ' . implode(' AND ', $where);
+        return [$sql, $params];
     }
 }

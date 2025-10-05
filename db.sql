@@ -5,7 +5,7 @@ CREATE TABLE roles (
 				'admin',
 				'student',
 				'teacher'
-		),
+		) UNIQUE NOT NULL,
 		PRIMARY KEY (role_id)
 );
 

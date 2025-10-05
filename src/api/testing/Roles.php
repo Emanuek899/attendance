@@ -3,61 +3,81 @@ ini_set('display_errors', 1);
 ini_set('display_startup_errors', 1);
 error_reporting(E_ALL);
 
-require_once __DIR__ . '/../../Components/Services/Roles/RolesManager.php';
 require_once __DIR__ . '/../../Config/connection.php';
 require_once __DIR__ . '/../../utils/Response.php';
-require_once __DIR__ . '/../../Components/Repositories/Roles.php';
 
-$data = json_decode(file_get_contents('php://input'), true);
+$url = $_SERVER['REQUEST_URI'];
+$route = explode('/', $url);
+$manager = 'Permissions.php';
+
+switch($manager){
+    case 'Roles.php':
+        require_once __DIR__ . '/../../Components/Services/Roles/RolesManager.php';
+        require_once __DIR__ . '/../../Components/Repositories/Roles.php';
+        $repo = new RolesRepository($db);
+        $manager = new RolesManager($repo); 
+        break;
+    
+    case 'Permissions.php':
+        require_once __DIR__ . '/../../Components/Services/Permissions/PermissionsManager.php';
+        require_once __DIR__ . '/../../Components/Repositories/Permissions.php';
+        $repo = new PermissionsRepository($db);
+        $manager = new PermissionsManager($repo); 
+        break;
+}
+
+$json = json_decode(file_get_contents('php://input'), true);
 $method = $_SERVER["REQUEST_METHOD"];
-$repo = new RolesRepository($db); 
-$rolesManager = new RolesManager($repo);
 
+/**
+ * falta validacion de json, a trabajar en un futuro un componente
+ * Por el momento sin validacion de json, json hardcode
+*/
 switch ($method){
     case 'GET':
-        $roles = $rolesManager->read([$data['col_cond'] => [$data['op'], $data['val']]]);
-        if(empty($roles)){
-            Response::response($roles, 200);
+        $data = $manager->read(empty($json) ? [] : $json['cond']);
+        if(empty($data)){
+            Response::response($data, 200);
             // Response::response($all, 200);
         } else {
-            Response::response($roles, 201);
+            Response::response($data, 201);
 
         }
         break;
     
     case 'POST':
-        $newRole = $rolesManager->create($data['roleName']);
-        $status = $newRole['status'];
+        $data = $manager->create($json['permName']);
+        $status = $data['status'];
         if($status){
-            Response::response($newRole, 200);
+            Response::response($data, 200);
         }else{
-            Response::response($newRole, 400);
+            Response::response($data, 400);
         }
         break;
     
     case 'PUT':
-        $editRole = $rolesManager->update($data['new'], $data['cond']);
-        $status = $editRole['status'];
+        $data = $manager->update($json['new'], $json['cond']);
+        $status = $data['status'];
         if($status){
-            Response::response($editRole, 200);
+            Response::response($data, 200);
         }else{
-            Response::response($editRole, 400);
+            Response::response($data, 400);
         }
         break;
     
-        case 'DELETE':
-            $editRole = $rolesManager->delete($data['cond']);
-            $status = $editRole['status'];
-            if($status){
-                Response::response($editRole, 200);
-            }else{
-                Response::response($editRole, 400);
-            }
-            break;
+    case 'DELETE':
+        $data = $manager->delete($json['cond']);
+        $status = $data['status'];
+        if($status){
+            Response::response($data, 200);
+        }else{
+            Response::response($data, 400);
+        }
+        break;
 }
 
 
-// $all = $rolesManager->delete(['role_id' => $data['role_id']]);
+// $all = $rolesManager->delete(['role_id' => $json['role_id']]);
 
 
 
