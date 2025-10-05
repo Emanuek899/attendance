@@ -56,7 +56,7 @@ $method = $_SERVER["REQUEST_METHOD"];
 */
 switch ($method){
     case 'GET':
-        $data = $manager->read($json['cond'] ?? []);
+        $data = $manager->read($json['cond'] ?? [], $json['cols'] ?? ['*']);
         if(empty($data)){
             Response::response($data, 200);
             // Response::response($all, 200);
