@@ -18,7 +18,12 @@ class MySQLdatabase implements Database{
      *              Example ['role' => ['=', 7]]
      * @return 
     */
-    public function find(string $table, array $columns = ['*'] ,array $conditions = []): array {
+    public function find(
+        string $table, 
+        array $columns = ['*'],
+        array $conditions = [],
+        bool $or = false 
+        ): array {
         try{
             $cols = implode(',', $columns);
             $sltClause = "SELECT $cols FROM $table";
@@ -107,9 +112,8 @@ class MySQLdatabase implements Database{
                 $stmt = $this->pdo->prepare($sql[0]);
                 $stmt->execute($sql[1]);
                 if($stmt->rowCount() == 0) return false;
-                return $stmt;
+                return true;
             }else{
-                echo "Error - Can't delete without conditions";
                 return false;
             }
             // where clause

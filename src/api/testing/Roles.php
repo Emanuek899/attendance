@@ -1,32 +1,50 @@
 <?php
+
 ini_set('display_errors', 1);
 ini_set('display_startup_errors', 1);
 error_reporting(E_ALL);
 
 require_once __DIR__ . '/../../Config/connection.php';
 require_once __DIR__ . '/../../utils/Response.php';
-
 $url = $_SERVER['REQUEST_URI'];
 $route = explode('/', $url);
-$manager = 'Permissions.php';
+$json = json_decode(file_get_contents('php://input'), true);
+$file = isset($json['file']) ? $json['file'] : null;
 
-switch($manager){
-    case 'Roles.php':
-        require_once __DIR__ . '/../../Components/Services/Roles/RolesManager.php';
-        require_once __DIR__ . '/../../Components/Repositories/Roles.php';
-        $repo = new RolesRepository($db);
-        $manager = new RolesManager($repo); 
-        break;
-    
-    case 'Permissions.php':
-        require_once __DIR__ . '/../../Components/Services/Permissions/PermissionsManager.php';
-        require_once __DIR__ . '/../../Components/Repositories/Permissions.php';
-        $repo = new PermissionsRepository($db);
-        $manager = new PermissionsManager($repo); 
-        break;
+function pull($route1, $route2){
+    require_once __DIR__ . $route1;
+    require_once __DIR__ . $route2;    
 }
 
-$json = json_decode(file_get_contents('php://input'), true);
+function objs($manager, $db){
+    $repoClass = $manager . 'Repository';
+    $managerClass = $manager . 'Manager';
+    $repo = new $repoClass($db);
+    $manager = new $managerClass($repo); 
+    return $manager;
+}
+
+switch($file){
+    case 'Roles':
+        pull('/../../Components/Services/Roles/RolesManager.php', '/../../Components/Repositories/Roles.php');
+        break;
+    
+    case 'Permissions':
+        pull('/../../Components/Services/Permissions/PermissionsManager.php', '/../../Components/Repositories/Permissions.php');
+        break;
+
+    case 'RolePermissions':
+        pull('/../../Components/Services/RolePermissions/RolePermissionsManager.php', '/../../Components/Repositories/RolePermissions.php');
+        break;
+
+    default:
+        Response::response([
+            'no tienes acceso papu si no especificas file XD o hay error de formato en json'
+        ], 404);
+        exit;
+}
+
+$manager = objs($file, $db);
 $method = $_SERVER["REQUEST_METHOD"];
 
 /**
@@ -35,7 +53,7 @@ $method = $_SERVER["REQUEST_METHOD"];
 */
 switch ($method){
     case 'GET':
-        $data = $manager->read(empty($json) ? [] : $json['cond']);
+        $data = $manager->read($json['cond'] ?? []);
         if(empty($data)){
             Response::response($data, 200);
             // Response::response($all, 200);
@@ -46,7 +64,7 @@ switch ($method){
         break;
     
     case 'POST':
-        $data = $manager->create($json['permName']);
+        $data = $manager->create($json['data']);
         $status = $data['status'];
         if($status){
             Response::response($data, 200);
@@ -66,7 +84,7 @@ switch ($method){
         break;
     
     case 'DELETE':
-        $data = $manager->delete($json['cond']);
+        $data = $manager->delete($json['cond'] ?? []);
         $status = $data['status'];
         if($status){
             Response::response($data, 200);

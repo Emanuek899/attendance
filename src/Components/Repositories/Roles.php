@@ -1,5 +1,5 @@
 <?php
-require_once __DIR__ . '/../../Core/interfaces/Roles.php';
+require_once __DIR__ . '/../../Core/interfaces/Repo_interfaces/Roles.php';
 class RolesRepository implements RoleInterface{
     private MySQLdatabase $mysql;
 
@@ -17,8 +17,8 @@ class RolesRepository implements RoleInterface{
      * @param
      * @return 
      */
-    public function post(string $role): bool{
-        return $this->mysql->insert('roles', ['role' => $role]);
+    public function post(array $data): bool{
+        return $this->mysql->insert('roles', $data);
     }
 
     /**

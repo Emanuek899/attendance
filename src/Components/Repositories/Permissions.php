@@ -24,8 +24,8 @@ class PermissionsRepository implements PermissionsInterface{
      * @param string $permission Permission to insert in the database.
      * @return bool Returns if the operation was succesfull
      */
-    public function insert(string $permission): bool{
-        return $this->mysql->insert('permissions', ['permission' => $permission]);
+    public function insert(array $data): bool{
+        return $this->mysql->insert('permissions', $data);
     }
 
     public function update(array $data, array $conditions): bool{

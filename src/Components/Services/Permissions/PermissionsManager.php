@@ -7,12 +7,12 @@ class PermissionsManager{
     }
 
 
-    public function create(string $permission): array{
-        $exec = $this->repo->insert($permission);
+    public function create(array $data): array{
+        $exec = $this->repo->insert($data);
         return [
             'status' => $exec,
             'message' => $exec ? 'creado exitoso' : 'error al crear',
-            'data' => $permission
+            'data' => $data
         ];
     }
 

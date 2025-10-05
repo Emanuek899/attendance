@@ -16,12 +16,12 @@ class RolesManager{
      * @param
      * @return 
      */
-    public function create(string $role): array{
-        $exec = $this->rolesRepository->post($role);
+    public function create(array $data): array{
+        $exec = $this->rolesRepository->post($data);
         if($exec){
-            return ['status' => true, 'data' => $role];
+            return ['status' => true, 'data' => $data];
         } else { 
-            return ['status' => false, 'data' => $role];  
+            return ['status' => false, 'data' => $data];  
         }
         exit;
     }
