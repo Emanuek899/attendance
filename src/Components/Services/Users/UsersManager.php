@@ -17,8 +17,8 @@ class UsersManager extends BaseManager{
 
     public function read(array $conditions = [], array $cols = ['*']): array{
         $users = parent::read($conditions, $cols);
-        if(isset($users['errorCode'])){
-            return status(false, '', 'database error', $users);
+        if(isset($users['internal_code'])){
+            return dbErrorStatus($users['details'], $users['internal_code']);
         }
         return parent::read($conditions, $cols);
     }

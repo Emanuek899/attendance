@@ -11,7 +11,7 @@ class UsersController extends BaseController{
 
     public function getUsers(array $conditions = [], array $cols = ['*']){
         $users = parent::get($conditions, $cols);
-        if(isset($users['data']['errorCode'])){
+        if(isset($users['internal_code'])){
             Response::response($users, 400);
             return;
         }

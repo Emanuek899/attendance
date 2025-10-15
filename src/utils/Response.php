@@ -6,7 +6,7 @@ class Response{
         http_response_code($code);
         echo json_encode([
             'status' => $status,
-            'data' => $data
+            'ResponseData' => $data
         ]);
         exit;
     }

@@ -5,7 +5,7 @@
  * @version 1.0
  */
 require_once __DIR__ . '/../../Core/interfaces/Database.php';
-require_once __DIR__ . '/../../utils/dbErrorsStatus.php';
+require_once __DIR__ . '/../../utils/status.php';
 
 class MySQLdatabase implements Database{
     private PDO $pdo;
