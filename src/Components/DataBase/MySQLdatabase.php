@@ -5,6 +5,8 @@
  * @version 1.0
  */
 require_once __DIR__ . '/../../Core/interfaces/Database.php';
+require_once __DIR__ . '/../../utils/dbErrorsStatus.php';
+
 class MySQLdatabase implements Database{
     private PDO $pdo;
     
@@ -46,7 +48,15 @@ class MySQLdatabase implements Database{
             }
  
         }catch(PDOException $e){
-            throw $e;
+            $errorCode = $e->getCode();
+            switch($errorCode){
+                case '42S22':
+                    $message = 'Error en la seleccion de columnas a buscar';
+                    return dbErrorStatus($message, $errorCode);
+                    break;
+
+            }
+            return dbErrorStatus('Error de base de datos', $errorCode);
         }
 
     }
@@ -67,7 +77,6 @@ class MySQLdatabase implements Database{
             return $stmt->execute($data);
         }catch(PDOException $e){
             throw $e;
-            // return false;
         }
     }
 
@@ -126,7 +135,7 @@ class MySQLdatabase implements Database{
     /**
      * Consstruct a where section of a query, with dinamic conditions
      */
-    private function whereClause(string $sql, array $conditions, array $params): array{
+    private static function whereClause(string $sql, array $conditions, array $params): array{
         $where = [];
         foreach($conditions as $col => [$op, $val]){
             $where[] = "$col $op :cond_$col";

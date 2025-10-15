@@ -1,15 +1,14 @@
 <?php
 require_once __DIR__ . '/../BaseManager.php';
-
-class PermissionsManager extends BaseManager{
+require_once __DIR__ . '/../../../utils/validator.php';
+class SchollarCycleManager extends BaseManager{
     private Validator $val;
 
-    public function __construct(PermissionsRepository $repository, Validator $val){
-        parent::__construct($repository);
+    public function __construct(SchollarCycleRepository $repo, Validator $val){
+        parent::__construct($repo);
         $this->val = $val;
     }
-
-
+    
     public function create(array $data): array{
         return parent::create($data);
     }

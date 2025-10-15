@@ -2,33 +2,36 @@
 
 ini_set('display_errors', 1);
 ini_set('display_startup_errors', 1);
-error_reporting(E_ALL);
+error_reporting(E_ALL); 
 
-require_once __DIR__ . '/../../Config/connection.php';
-require_once __DIR__ . '/../../utils/Response.php';
-require_once __DIR__ . '/../../utils/validator.php';
+require_once __DIR__ . '/../../../src/Config/connection.php';
+require_once __DIR__ . '/../../../src/utils/Response.php';
+require_once __DIR__ . '/../../../src/utils/validator.php';
 
 $url = $_SERVER['REQUEST_URI'];
 $route = explode('/', $url);
 $json = json_decode(file_get_contents('php://input'), true);
 $file = isset($json['file']) ? $json['file'] : null;
-$val = new Validator();
+$val = new Validator;
 
-function pull($route1, $route2){
+function pull($route1, $route2, $route3){
     require_once __DIR__ . $route1;
     require_once __DIR__ . $route2;    
+    require_once __DIR__ . $route3;    
 }
 
 function objs($manager, $db, $val){
     $repoClass = $manager . 'Repository';
     $managerClass = $manager . 'Manager';
+    $controllerClass = $manager . 'Controller'; 
     $repo = new $repoClass($db);
     $manager = new $managerClass($repo, $val); 
-    return $manager;
+    $controller = new $controllerClass($manager, $val);
+    return $controller;
 }
 
 switch($file){
-    case 'Roles':
+/*     case 'Roles':
         pull('/../../Components/Services/Roles/RolesManager.php', '/../../Components/Repositories/Roles.php');
         break;
     
@@ -40,6 +43,20 @@ switch($file){
         pull('/../../Components/Services/RolePermissions/RolePermissionsManager.php', '/../../Components/Repositories/RolePermissions.php');
         break;
 
+    case 'Reports':
+        pull('/../../Components/Services/Reports/ReportsManager.php', '/../../Components/Repositories/Reports.php');
+        break;
+
+    case 'Sections':
+        pull('/../../../src/Components/Services/Reports/ReportsManager.php', '/../../../src/Components/Repositories/Reports.php');
+        break;     */    
+    
+    case 'Users':
+        pull('/../../../src/Components/Services/Users/UsersManager.php', 
+             '/../../../src/Components/Repositories/Users.php',
+             '/../../../src/Controllers/UsersController.php');
+        break;
+        
     default:
         Response::response([
             'no tienes acceso papu si no especificas file XD o hay error de formato en json'
@@ -47,7 +64,7 @@ switch($file){
         exit;
 }
 
-$manager = objs($file, $db, $val);
+$controller = objs($file, $db, $val);
 $method = $_SERVER["REQUEST_METHOD"];
 
 /**
@@ -56,17 +73,23 @@ $method = $_SERVER["REQUEST_METHOD"];
 */
 switch ($method){
     case 'GET':
-        $data = $manager->read($json['cond'] ?? [], $json['cols'] ?? ['*']);
-        if(empty($data)){
-            Response::response($data, 200);
-            // Response::response($all, 200);
-        } else {
-            Response::response($data, 201);
-
+        $queryConditions = isset($json['queryConditions']) ? $json['queryConditions'] : [];
+        $queryColumns = isset($json['queryColumns']) ? $json['queryColumns'] : [];
+        $inputData = [
+            'queryColumns'    => $queryColumns
+        ];
+        $inputRules = [
+            'queryColumns'   => 'Empty'
+        ];
+        $errors = $val->validate($inputData, $inputRules);
+        if(!empty($errors)){
+            Response::response($errors, 400);
         }
+        $controller->getUsers($queryConditions, $queryColumns);
         break;
     
     case 'POST':
+        $newData = isset($json['data']) ? $json['data'] : [];
         $data = $manager->create($json['data']);
         $status = $data['status'];
         if($status){

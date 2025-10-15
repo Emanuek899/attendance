@@ -1,14 +1,16 @@
 <?php
-class RolesManager{
-    private RolesRepository $rolesRepository;
+require_once __DIR__ . '/../BaseManager.php';
 
+class RolesManager extends BaseManager{
+    private Validator $val;
     /**
      * Crea una instancia de RolesManager
      * @param
      * @return
      */
-    public function __construct(RolesRepository $rolesRepository){
-        $this->rolesRepository = $rolesRepository;
+    public function __construct(RolesRepository $rolesRepository, Validator $val){
+        parent::__construct($rolesRepository);
+        $this->val = $val;
     }
 
     /**
@@ -17,13 +19,7 @@ class RolesManager{
      * @return 
      */
     public function create(array $data): array{
-        $exec = $this->rolesRepository->post($data);
-        if($exec){
-            return ['status' => true, 'data' => $data];
-        } else { 
-            return ['status' => false, 'data' => $data];  
-        }
-        exit;
+        return parent::create($data);
     }
 
     /**
@@ -32,7 +28,7 @@ class RolesManager{
      * @param   array $conditions Conditions of query [col1 => condVal]
      */
     public function read(array $conditions = [], array $cols = ['*']): array{
-        return $this->rolesRepository->select($conditions, $cols);
+        return parent::read($conditions, $cols);
     }
 
     /** 
@@ -44,8 +40,7 @@ class RolesManager{
      * @return
     */
     public function update(array $data, array $conditions): array{
-        $exec = $this->rolesRepository->update($data, $conditions);
-        return ['status' => $exec, 'message' => $exec ? 'creado' : 'fallo al crear'];
+        return parent::update($data, $conditions);
     }
 
     /**
@@ -55,7 +50,6 @@ class RolesManager{
      * @param array $params Params of the sql consult, by name
      */
     public function delete(array $conditions = []): array{
-        $exec = $this->rolesRepository->delete($conditions);
-        return ['status' => $exec, 'message' => $exec ? 'borrado' : 'fallo al borrar'];
+        return parent::delete($conditions);
     }
 }

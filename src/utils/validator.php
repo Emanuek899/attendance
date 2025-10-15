@@ -42,7 +42,13 @@ class Validator{
 
     private function validateInteger(string $parameter, $num){
         if(!is_int($num)){
-            $this->errors[$parameter][] = "El $parameter no es un numero entero";
+            $this->errors[$parameter][] = "El $parameter no esta en formato entero";
         }
+    }
+
+    private function validateEmpty(string $parameter, $value){
+        if(empty($value)){
+            $this->errors[$parameter][] = "El $parameter esta vacio o no esta declarado";
+        }   
     }
 }

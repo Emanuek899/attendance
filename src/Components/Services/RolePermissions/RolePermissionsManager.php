@@ -1,37 +1,32 @@
 <?php
-require_once __DIR__ . '/../../../utils/status.php';
-
-class RolePermissionsManager{
-    private RolePermissionsRepository $repo;
+require_once __DIR__ . '/../BaseManager.php';
+class RolePermissionsManager extends BaseManager{
     private Validator $val;
 
 
     public function __construct(RolePermissionsRepository $repo, Validator $val){
-        $this->repo = $repo;
+        parent::__construct($repo);
         $this->val = $val;
     }
 
     public function create(array $data): array{
-        $rules = ['role_id' => 'Integer', 'permission_id' => 'Integer'];
+        /* $rules = ['role_id' => 'Integer', 'permission_id' => 'Integer'];
         $validation = $this->val->validate($data, $rules);
         if(!empty($validation)){
             return status(false, 'no mensaje', 'error en tipo de datos', $validation);
-        }
-        $exec = $this->repo->insert($data);
-        return status($exec, 'creado exitosamente', 'error al crear', $data);
+        } */
+        return parent::create($data);
     }
 
     public function read(array $conditions = [], array $cols = ['*']): array{
-        return $this->repo->select($conditions, $cols);
+        return parent::read($conditions, $cols);
     }
 
     public function update(array $data, array $conditions): array{
-        $exec = $this->repo->update($data, $conditions);
-        return status($exec, 'modificado exitoso', 'error al modificar', $data);
+        return parent::update($data, $conditions);
     }
 
     public function delete(array $cond = []): array{
-        $exec = $this->repo->delete($cond);
-        return status($exec, 'borrado exitoso', 'error al borrar', $cond);
+        return parent::delete($cond);
     }
 }
