@@ -35,9 +35,9 @@ in database son you must specify the values
     "new": {
         "role_id": 12,
         "permission_id": 15
-    },
+    },kkkkk
 }
-```
+```kpkp
 
 #### Update method
 it works silimar to post method, with some diferencies. Be aware on your input
