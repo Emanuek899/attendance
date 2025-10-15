@@ -89,34 +89,20 @@ switch ($method){
         break;
     
     case 'POST':
-        $newData = isset($json['data']) ? $json['data'] : [];
-        $data = $manager->create($json['data']);
-        $status = $data['status'];
-        if($status){
-            Response::response($data, 200);
-        }else{
-            Response::response($data, 400);
-        }
+        $newData = isset($json['newData']) ? $json['newData'] : [];
+        $controller->insertUser($newData);
         break;
     
     case 'PUT':
-        $data = $manager->update($json['new'], $json['cond']);
-        $status = $data['status'];
-        if($status){
-            Response::response($data, 200);
-        }else{
-            Response::response($data, 400);
-        }
+        $updatedData = isset($json['updatedData']) ? $json['updatedData'] : [];
+        $conditions = isset($json['conditions']) ? $json['conditions'] : [];
+        $controller->updateUser($updatedData, $conditions);
         break;
     
     case 'DELETE':
-        $data = $manager->delete($json['cond'] ?? []);
-        $status = $data['status'];
-        if($status){
-            Response::response($data, 200);
-        }else{
-            Response::response($data, 400);
-        }
+        $conditions = isset($json['conditions']) ? $json['conditions'] : [];
+        $controller->deleteUser($conditions);
+        break;
         break;
 }
 

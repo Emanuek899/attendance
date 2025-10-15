@@ -1,6 +1,7 @@
 <?php
 require_once __DIR__ . '/../../utils/status.php';
 
+
 class BaseManager {
 private object $repo;
 
@@ -9,8 +10,8 @@ private object $repo;
     }
 
     public function create(array $data): array{
-        $exec = $this->repo->insert($data);
-        return status($exec, 'creado exitosamente', 'error al crear', $data);
+        return $this->repo->insert($data);
+        
     }
 
     public function read(array $conditions = [], array $cols = ['*']): array{
@@ -18,12 +19,10 @@ private object $repo;
     }
 
     public function update(array $data, array $conditions): array{
-        $exec = $this->repo->update($data, $conditions);
-        return status($exec, 'modificado exitoso', 'error al modificar', $data);
+        return $this->repo->update($data, $conditions);
     }
 
     public function delete(array $cond = []): array{
-        $exec = $this->repo->delete($cond);
-        return status($exec, 'borrado exitoso', 'error al borrar', $cond);
+        return $this->repo->delete($cond);
     }
 }

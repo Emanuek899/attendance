@@ -51,4 +51,10 @@ class Validator{
             $this->errors[$parameter][] = "El $parameter esta vacio o no esta declarado";
         }   
     }
+
+    private function validateErrorCase(string $parameter, $value){
+        if(isset($user['error'])){
+            $this->errors[$parameter][] = $user['error'];
+        }
+    }
 }

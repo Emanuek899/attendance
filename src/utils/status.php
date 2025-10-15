@@ -5,9 +5,15 @@
  */
 function status(bool $exec, $msg1, $msg2, $data, ){    
     return [
-        'status' => $exec,
         'message' => $exec ? $msg1 : $msg2,
         'data' => $data
+    ];
+}
+
+function statusError(string $error, int $statusCode = 400){
+    return [
+        'error' => $error,
+        'statusCode' => $statusCode
     ];
 }
 

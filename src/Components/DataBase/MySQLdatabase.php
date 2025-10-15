@@ -32,31 +32,28 @@ class MySQLdatabase implements Database{
             $params = [];
             // create where clause if conditions exist
             if(!empty($conditions)){
-                $sql = $this->whereClause($sltClause, $conditions, $params);
-                $stmt = $this->pdo->prepare($sql[0]);
-                $stmt->execute($sql[1]);
+                $where = $this->whereClause($sltClause, $conditions, $params);
+                $sql = $where[0];
+                $params = $where[1];
+                $stmt = $this->pdo->prepare($sql);
+                $stmt->execute($params);
             }else{
                 $stmt = $this->pdo->prepare($sltClause);
                 $stmt->execute($params);
             }
             $roles = $stmt->fetchall(PDO::FETCH_ASSOC); 
-            if(!empty($roles)){
-                return $roles;               
-            } else{
-                return ['no se encontraron registros que cumplan las condiciones (revise las condiciones)']; 
-
-            }
+            if(!empty($roles)) return $roles;               
+            return []; 
  
         }catch(PDOException $e){
             $errorCode = $e->getCode();
             switch($errorCode){
                 case '42S22':
-                    $message = 'Error en la seleccion de columnas a buscar';
-                    return dbErrorStatus($message, $errorCode);
+                    return dbErrorStatus($e->getMessage(), $errorCode);
                     break;
 
             }
-            return dbErrorStatus('Error de base de datos', $errorCode);
+            return dbErrorStatus($e->getMessage(), $errorCode);
         }
 
     }
@@ -68,15 +65,18 @@ class MySQLdatabase implements Database{
      *              example ['roles' => 'admin']
      * @return
     */
-    public function insert(string $table, array $data): bool {
+    public function insert(string $table, array $data): array {
         try{
             $cols = implode(',', array_keys($data)); 
             $placeholders = ':' . implode(', :', array_keys($data));
             $sql = "INSERT INTO $table($cols) VALUES ($placeholders)";
             $stmt = $this->pdo->prepare($sql);
-            return $stmt->execute($data);
+            $status = $stmt->execute($data);
+            $data['id'] = $this->pdo->lastInsertId();
+            return status($status, 'creado exitosamente', '', $data);
         }catch(PDOException $e){
-            throw $e;
+            $errorCode = $e->getCode();
+            return dbErrorStatus($e->getmessage(), $errorCode);
         }
     }
 
@@ -85,7 +85,7 @@ class MySQLdatabase implements Database{
      * @param   
      * @return
     */
-    public function update(string $table, array $data, array $conditions): bool{
+    public function update(string $table, array $data, array $conditions): array{
         try{
             $set = [];
             $params = [];
@@ -96,13 +96,19 @@ class MySQLdatabase implements Database{
 
             // create where clause format if conditions exist
             if(!empty($conditions)){
-                $sql = $this->whereClause($setClause, $conditions, $params);
+                $where = $this->whereClause($setClause, $conditions, $params);
             }
-            foreach($data as $col => $val){$sql[1][":$col"] = $val;}
-            $stmt = $this->pdo->prepare($sql[0]);
-            return $stmt->execute($sql[1]);
+            $sql = $where[0];
+            $params = $where[1];
+            foreach($data as $col => $val){$params[":$col"] = $val;}
+            $stmt = $this->pdo->prepare($sql);
+            $stmt->execute($params);
+            $affectedRows = $stmt->rowCount();
+            if($affectedRows == 0) return statusError('No se encontro el recurso', 404);
+            return status(true, 'sucesfully uploaded', '', $data);
         }catch(PDOException $e){
-            throw $e;
+            $errorCode = $e->getCode();
+            return dbErrorStatus($e->getmessage(), $errorCode);
         }
     }
 
@@ -111,37 +117,40 @@ class MySQLdatabase implements Database{
      * @param
      * @return
      */
-    public function delete(String $table, array $conditions = []): bool {
+    public function delete(String $table, array $conditions = []): array {
         try{
             //where clause if conditions is not empty
             if(!empty($conditions)){
                 $delClause = "DELETE FROM $table";
                 $params = [];
-                $sql =  $this->whereClause($delClause, $conditions, $params);
-                $stmt = $this->pdo->prepare($sql[0]);
-                $stmt->execute($sql[1]);
-                if($stmt->rowCount() == 0) return false;
-                return true;
+                $where =  $this->whereClause($delClause, $conditions, $params);
+                $sql = $where[0];
+                $params = $where[1];
+                $stmt = $this->pdo->prepare($sql);
+                $stmt->execute($params);
+                if($stmt->rowCount() == 0) return statusError('cant found the recourse', 404);
+                return status(true, 'succesfully deleted', '', $conditions);
             }else{
-                return false;
+                return statusError('cant delete without conditions', 409);
             }
             // where clause
             
         }catch(PDOException $e){
-            throw $e;
+            $errorCode = $e->getCode();
+            return dbErrorStatus($e->getmessage(), $errorCode);
         }
     }
 
     /**
      * Consstruct a where section of a query, with dinamic conditions
      */
-    private static function whereClause(string $sql, array $conditions, array $params): array{
+    private static function whereClause(string $sql, array $conditions, array $params,): array{
         $where = [];
         foreach($conditions as $col => [$op, $val]){
             $where[] = "$col $op :cond_$col";
             $params[":cond_$col"] = $val; 
         }
-        $sql .= ' WHERE ' . implode(' AND ', $where);
+        $sql .= " WHERE " . implode(' OR ', $where);
         return [$sql, $params];
     }
 }

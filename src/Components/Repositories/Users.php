@@ -9,7 +9,7 @@ class UsersRepository implements UsersInterface{
         $this->mysql = $mysql;
     }
 
-    public function insert(array $data): bool{
+    public function insert(array $data): array{
         return $this->mysql->insert(self::TABLE, $data);
     }
 
@@ -17,11 +17,11 @@ class UsersRepository implements UsersInterface{
         return $this->mysql->find(self::TABLE, $cols, $conditions);
     }
 
-    public function update(array $data, array $conditions): bool{
+    public function update(array $data, array $conditions): array{
         return $this->mysql->update(self::TABLE, $data, $conditions);
     }
 
-    public function delete(array $conditions = []): bool{
+    public function delete(array $conditions = []): array{
         return $this->mysql->delete(self::TABLE, $conditions);
     }
 }
