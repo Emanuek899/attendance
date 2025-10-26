@@ -1,28 +1,27 @@
 <?php
 require_once __DIR__ . '/../../utils/status.php';
 
-
 class BaseManager {
 private object $repo;
 
-    public function __construct(object $repo){
+    public function __construct(MySQLRepositorie $repo){
         $this->repo = $repo;
     }
 
-    public function create(array $data): array{
-        return $this->repo->insert($data);
+    public function createQuery(string $table, array $data): array{
+        return $this->repo->insert($table, $data);
         
     }
 
-    public function read(array $conditions = [], array $cols = ['*']): array{
-        return $this->repo->select($conditions, $cols);
+    public function readQuery(string $table, array $conditions = [], array $cols = ['*'], array $joins = []): array{
+        return $this->repo->select($table, $conditions, $cols, $joins);
     }
 
-    public function update(array $data, array $conditions): array{
-        return $this->repo->update($data, $conditions);
+    public function updateQuery(string $table, array $data, array $conditions): array{
+        return $this->repo->update($table, $data, $conditions);
     }
 
-    public function delete(array $cond = []): array{
-        return $this->repo->delete($cond);
+    public function deleteQuery(string $table, array $cond = []): array{
+        return $this->repo->delete($table, $cond);
     }
 }
