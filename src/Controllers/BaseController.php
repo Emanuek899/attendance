@@ -14,8 +14,8 @@ class BaseController{
     /**
      * Get the data from the respective manager and return the return value
      */
-    public function get(array $conditions = [], array $cols = ['*']){
-        return $this->manager->read($conditions, $cols);
+    public function get(array $conditions = [], array $cols = ['*'], array $joins = []){
+        return $this->manager->read($conditions, $cols, $joins);
     }
 
     /**
