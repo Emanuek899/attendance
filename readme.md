@@ -15,14 +15,25 @@ Payload format for a get method without basic conditions (only and)
 }
 ```
 
-Payload format with support for basic conditions (only and) and columns, you can skip columns if you want all columns
+Payload format with support for basic conditions with boolean AND, OR, and columns, you can skip columns if you want all columns
 ```json
 {
-    "file": "RolesRepository",
-    "cols": ["role_id"],
-    "cond": {
-        "role_id": ["=", 12]
+  "file": "Users",
+  "queryColumns" : ["*"],
+  "queryConditions" : [ //queryonditions is only if you want where clausules
+    {
+      "column": "user_id",
+      "op"    : "<",
+      "val"   : 50,
+      "boolean" : "AND" //The first boolean is ignored but necessary for the moment
+    },
+    {
+      "column": "username",
+      "op"    : "=",
+      "val"   : "test",
+      "boolean" : "OR"
     }
+  ]
 }
 ```
 #### Post Method
@@ -35,9 +46,9 @@ in database son you must specify the values
     "new": {
         "role_id": 12,
         "permission_id": 15
-    },kkkkk
+    }
 }
-```kpkp
+```
 
 #### Update method
 it works silimar to post method, with some diferencies. Be aware on your input

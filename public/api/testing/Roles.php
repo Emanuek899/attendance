@@ -20,16 +20,6 @@ function pull($route1, $route2, $route3){
     require_once __DIR__ . $route3;    
 }
 
-function objs($manager, $db, $val){
-    $repoClass = $manager . 'Repository';
-    $managerClass = $manager . 'Manager';
-    $controllerClass = $manager . 'Controller'; 
-    $repo = new $repoClass($db);
-    $manager = new $managerClass($repo, $val); 
-    $controller = new $controllerClass($manager, $val);
-    return $controller;
-}
-
 switch($file){
 /*     case 'Roles':
         pull('/../../Components/Services/Roles/RolesManager.php', '/../../Components/Repositories/Roles.php');
@@ -56,6 +46,12 @@ switch($file){
              '/../../../src/Components/Repositories/Users.php',
              '/../../../src/Controllers/UsersController.php');
         break;
+
+    case 'Classes':
+        pull('/../../../src/Components/Services/Classes/ClassesManager.php', 
+             '/../../../src/Components/Repositories/MySQLRepositorie.php',
+             '/../../../src/Controllers/ClassesController.php');
+        break;
         
     default:
         Response::response([
@@ -63,8 +59,14 @@ switch($file){
         ], 404);
         exit;
 }
+require_once __DIR__ . '/../../../src/Components/Services/Classrooms/ClassroomsManager.php';
 
-$controller = objs($file, $db, $val);
+$managerClass = 'ClassesManager';
+$controllerClass = 'ClassesController'; 
+$repo = new MySQLRepositorie($db);
+$classroomsManager = new ClassroomsManager($repo, $val);
+$manager = new $managerClass($repo, $val, $classroomsManager); 
+$controller = new $controllerClass($manager, $val);
 $method = $_SERVER["REQUEST_METHOD"];
 
 /**
@@ -85,18 +87,18 @@ switch ($method){
         if(!empty($errors)){
             Response::response($errors, 400);
         }
-        $controller->getUsers($queryConditions, $queryColumns);
+        $controller->getClasses($queryConditions, $queryColumns);
         break;
     
     case 'POST':
         $newData = isset($json['newData']) ? $json['newData'] : [];
-        $controller->insertUser($newData);
+        $controller->insertClass($newData);
         break;
     
     case 'PUT':
         $updatedData = isset($json['updatedData']) ? $json['updatedData'] : [];
         $conditions = isset($json['conditions']) ? $json['conditions'] : [];
-        $controller->updateUser($updatedData, $conditions);
+        $controller->updateClass($updatedData, $conditions);
         break;
     
     case 'DELETE':
