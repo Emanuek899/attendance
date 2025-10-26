@@ -1,7 +1,6 @@
 <?php
-require_once __DIR__ . '/../Components/DataBase/MySQLdatabase.php';
-require_once __DIR__ . '/../Core/interfaces/Database.php';
 require_once __DIR__ . '/../../vendor/autoload.php';
+require_once __DIR__ . '/../Components/DataBase/MySQLdatabase.php';
 use Dotenv\Dotenv;
 
 $dotenv = Dotenv::createImmutable(__DIR__ . '/../');
