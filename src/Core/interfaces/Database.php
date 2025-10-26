@@ -5,8 +5,14 @@
  * @version 1.0
  */
 interface Database {
-    public function find(string $table, array $cols, array $conditions, bool $or): array;
-    public function insert(string $table, array $data): array;
-    public function update(string $table, array $data, array $conditions): array;
-    public function delete(string $table, array $conditions): array;
+    public function table(string $table);
+    public function columns(array $columns);
+    public function where(array $conditions);
+    public function join(array $joins);
+    public function vals(array $vals);
+
+    public function find(): array;
+    public function insert(): array;
+    public function update(): array;
+    public function delete(): array;
 }
