@@ -32,8 +32,8 @@ class UsersManager extends BaseManager{
         return $user;
     }
 
-    public function read(array $conditions = [], array $cols = ['*']): array{
-        $user = parent::read($conditions, $cols);
+    public function read(array $conditions = [], array $cols = ['*'], array $joins = []): array{
+        $user = parent::read($conditions, $cols, $joins);
         if(isset($user['internal_code'])){
             switch($user['internal_code']){
                 case "42S22":

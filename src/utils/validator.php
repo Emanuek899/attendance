@@ -1,4 +1,5 @@
 <?php
+include __DIR__ . '/parsers.php';
 class Validator{
     public array $errors = [];
 
@@ -55,6 +56,18 @@ class Validator{
     private function validateErrorCase(string $parameter, $value){
         if(isset($user['error'])){
             $this->errors[$parameter][] = $user['error'];
+        }
+    }
+
+    /**
+     * Validate a error code from the database
+     * @param string $parameter is the name of the parameter
+     * @param array $error The data to analyze if is existing
+     * @return void
+     */
+    private function validateExistRegister(string $parameter, array $data){
+        if(!empty($data)){
+            $this->errors[$parameter] = "the parameter $parameter already exists in the database";
         }
     }
 }

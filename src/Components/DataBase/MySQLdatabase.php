@@ -6,9 +6,16 @@
  */
 require_once __DIR__ . '/../../Core/interfaces/Database.php';
 require_once __DIR__ . '/../../utils/status.php';
+require_once __DIR__ . '/../../utils/Response.php';
 
 class MySQLdatabase implements Database{
     private PDO $pdo;
+    private string $table;
+    private array $columns = ['*'];
+    private array $where = []; //[[column => col, op => op, placeholder => :placeholder, boolean => and]]
+    private array $joins = [];
+    private array $params = []; // [:param1 => val]
+    private array $vals = []; // [val1 => val]
     
     public function __construct(PDO $pdo) {
         $this->pdo = $pdo;
@@ -16,32 +23,18 @@ class MySQLdatabase implements Database{
 
     /**
      * select sql query
-     * @param array $conditions Conditions of the query. Format [colname => [op, val]]
-     *              Example ['role' => ['=', 7]]
-     * @return 
+     * @return array The founded users in the database or an empty array
     */
-    public function find(
-        string $table, 
-        array $columns = ['*'],
-        array $conditions = [],
-        bool $or = false 
-        ): array {
+    public function find(): array {
         try{
-            $cols = implode(',', $columns);
-            $sltClause = "SELECT $cols FROM $table";
-            $params = [];
+            $cols = implode(',', $this->columns);
+            $sql = "SELECT $cols FROM $this->table";
             // create where clause if conditions exist
-            if(!empty($conditions)){
-                $where = $this->whereClause($sltClause, $conditions, $params);
-                $sql = $where[0];
-                $params = $where[1];
-                $stmt = $this->pdo->prepare($sql);
-                $stmt->execute($params);
-            }else{
-                $stmt = $this->pdo->prepare($sltClause);
-                $stmt->execute($params);
-            }
+            if(!empty($this->where)) $sql = $this->whereClause($sql);
+            $stmt = $this->pdo->prepare($sql);
+            $stmt->execute($this->params);
             $roles = $stmt->fetchall(PDO::FETCH_ASSOC); 
+            $this->cleanVariables();
             if(!empty($roles)) return $roles;               
             return []; 
  
@@ -65,14 +58,16 @@ class MySQLdatabase implements Database{
      *              example ['roles' => 'admin']
      * @return
     */
-    public function insert(string $table, array $data): array {
+    public function insert(): array {
         try{
-            $cols = implode(',', array_keys($data)); 
-            $placeholders = ':' . implode(', :', array_keys($data));
+            $cols = implode(',', array_keys($this->vals)); 
+            $placeholders = implode(', ', array_keys($this->params));
+            $table = $this->table;
             $sql = "INSERT INTO $table($cols) VALUES ($placeholders)";
             $stmt = $this->pdo->prepare($sql);
-            $status = $stmt->execute($data);
+            $status = $stmt->execute($this->params);
             $data['id'] = $this->pdo->lastInsertId();
+            $this->cleanVariables();
             return status($status, 'creado exitosamente', '', $data);
         }catch(PDOException $e){
             $errorCode = $e->getCode();
@@ -85,27 +80,24 @@ class MySQLdatabase implements Database{
      * @param   
      * @return
     */
-    public function update(string $table, array $data, array $conditions): array{
+    public function update(): array{
         try{
             $set = [];
-            $params = [];
-            $setClause = "UPDATE $table ";
+            $table = $this->table;
+            $sql = "UPDATE $table ";
             // SET clause format
-            foreach($data as $col => $val){$set[] = "$col = :$col";}
-            $setClause .= 'SET ' . implode(', ', $set);
+            foreach($this->vals as $col => $val){$set[] = "$col = :$col";}
+            $sql .= 'SET ' . implode(', ', $set);
 
             // create where clause format if conditions exist
-            if(!empty($conditions)){
-                $where = $this->whereClause($setClause, $conditions, $params);
+            if(!empty($this->where)){
+                $sql = $this->whereClause($sql);
             }
-            $sql = $where[0];
-            $params = $where[1];
-            foreach($data as $col => $val){$params[":$col"] = $val;}
             $stmt = $this->pdo->prepare($sql);
-            $stmt->execute($params);
+            $stmt->execute($this->params);
             $affectedRows = $stmt->rowCount();
-            if($affectedRows == 0) return statusError('No se encontro el recurso', 404);
-            return status(true, 'sucesfully uploaded', '', $data);
+            if($affectedRows == 0) return statusError(['No se encontro el recurso'], 404);
+            return status(true, 'sucesfully uploaded', '', $this->pdo->lastInsertId());
         }catch(PDOException $e){
             $errorCode = $e->getCode();
             return dbErrorStatus($e->getmessage(), $errorCode);
@@ -117,7 +109,7 @@ class MySQLdatabase implements Database{
      * @param
      * @return
      */
-    public function delete(String $table, array $conditions = []): array {
+    public function delete(): array {
         try{
             //where clause if conditions is not empty
             if(!empty($conditions)){
@@ -127,7 +119,7 @@ class MySQLdatabase implements Database{
                 $sql = $where[0];
                 $params = $where[1];
                 $stmt = $this->pdo->prepare($sql);
-                $stmt->execute($params);
+                $stmt->execute($this->params);
                 if($stmt->rowCount() == 0) return statusError('cant found the recourse', 404);
                 return status(true, 'succesfully deleted', '', $conditions);
             }else{
@@ -144,13 +136,92 @@ class MySQLdatabase implements Database{
     /**
      * Consstruct a where section of a query, with dinamic conditions
      */
-    private static function whereClause(string $sql, array $conditions, array $params,): array{
-        $where = [];
-        foreach($conditions as $col => [$op, $val]){
-            $where[] = "$col $op :cond_$col";
-            $params[":cond_$col"] = $val; 
+    private function whereClause(string $sql): string{
+        foreach($this->where as $idx => $cond){
+            if($idx > 0){
+                $sql .= $cond['boolean'] . ' ' . 
+                        $cond['column'] . ' ' .
+                        $cond['op']. ' ' .
+                        $cond['placeholder'] . ' ';
+            }else{
+                $sql .= ' WHERE' . ' ' . 
+                        $cond['column'] . ' ' . 
+                        $cond['op']. ' ' .
+                        $cond['placeholder'] . ' ';
+            }
         }
-        $sql .= " WHERE " . implode(' OR ', $where);
-        return [$sql, $params];
+        return $sql;
+    }
+
+    private function joinClause(string $sql){
+        foreach($this->joins as $idx => $join){
+            if($idx > 0){
+                $sql .= $join['boolean'] . ' ' . 
+                        $join['column'] . ' ' .
+                        $join['op']. ' ' .
+                        $join['placeholder'] . ' ';
+            }
+        }
+    }
+
+    //methods to build querys
+
+    /**
+     * Stablish the table name
+     */
+    public function table(string $table){
+        $this->table = $table;
+        return $this;
+    }
+
+    /**
+     * Stablish the columns of the query
+     */
+    public function columns(array $columns){
+        $this->columns = $columns;
+        return $this;
+    }
+
+    /**
+     * [[column => 'columna1', 'op' => '=', 'val' => 1], [...]]
+     */
+    public function where(array $conditions){
+        foreach($conditions as $condition){
+            $this->where[] = [
+                'column'      => $condition['column'], 
+                'op'          => $condition['op'], 
+                'placeholder' => ":{$condition['column']}",
+                'boolean'     => $condition['boolean'],
+            ];
+            $this->params[":{$condition['column']}"] = $condition['val'];
+        }
+        return $this;
+    }
+
+    /**
+     * Stablis the joins for the query
+     */
+    public function join(array $joins){
+        foreach($joins as $join){
+            $this->joins[] = $join;
+        }
+        return $this;
+    }
+
+    public function vals($vals){
+        foreach($vals as $column => $val){
+            $this->vals[$column] = $val;
+            $this->params[":$column"] = $val;
+
+        }
+        return $this;
+    }
+
+    public function cleanVariables(){
+        $this->columns = ['*'];
+        $this->where = []; //[[column => col, op => op, placeholder => :placeholder, boolean => and]]
+        $this->joins = [];
+        $this->params = []; // [:param1 => val]
+        $this->vals = []; // [val1 => val]
     }
 }

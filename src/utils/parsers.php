@@ -4,6 +4,7 @@
  * format them in a friendly and clear way
  */
 class Parser{
+    
     public static function dbDuplicateErrorParser(string $dbErrorMsg){
         if (preg_match("/Duplicate entry '(.+)' for key '(.+)'/", $dbErrorMsg, $matches)) {
             return $matches[2]; 

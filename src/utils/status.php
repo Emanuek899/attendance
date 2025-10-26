@@ -10,7 +10,7 @@ function status(bool $exec, $msg1, $msg2, $data, ){
     ];
 }
 
-function statusError(string $error, int $statusCode = 400){
+function statusError(array $error, int $statusCode = 400){
     return [
         'error' => $error,
         'statusCode' => $statusCode

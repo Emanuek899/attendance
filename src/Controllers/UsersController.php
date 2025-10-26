@@ -22,8 +22,8 @@ class UsersController extends BaseController{
      * @param array $cols Columns of the sql sentence
      * @return void 
      */
-    public function getUsers(array $conditions = [], array $cols = ['*']){
-        $users = parent::get($conditions, $cols);
+    public function getUsers(array $conditions = [], array $cols = ['*'], array $joins = []){
+        $users = parent::get($conditions, $cols, $joins);
         if(isset($users['internal_code'])){
             Response::response($users, 500);
             exit;
