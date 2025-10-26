@@ -112,18 +112,15 @@ class MySQLdatabase implements Database{
     public function delete(): array {
         try{
             //where clause if conditions is not empty
-            if(!empty($conditions)){
-                $delClause = "DELETE FROM $table";
-                $params = [];
-                $where =  $this->whereClause($delClause, $conditions, $params);
-                $sql = $where[0];
-                $params = $where[1];
-                $stmt = $this->pdo->prepare($sql);
+            if(!empty($this->where)){
+                $delClause = "DELETE FROM $this->table";
+                $where =  $this->whereClause($delClause);
+                $stmt = $this->pdo->prepare($where);
                 $stmt->execute($this->params);
-                if($stmt->rowCount() == 0) return statusError('cant found the recourse', 404);
-                return status(true, 'succesfully deleted', '', $conditions);
+                if($stmt->rowCount() == 0) return statusError(['cant found the recourse'], 404);
+                return status(true, 'succesfully deleted', '', $this->where);
             }else{
-                return statusError('cant delete without conditions', 409);
+                return statusError(['cant delete without conditions'], 409);
             }
             // where clause
             
