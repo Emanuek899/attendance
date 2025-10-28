@@ -26,7 +26,7 @@ class ClassroomsManager extends BaseManager{
         return parent::deleteQuery(self::TABLE, $conditions);
     }
 
-    public function findById(int $id){
+    public function checkExistenceClassroomById(int $id){
         $conditions =[
             [
                 'column' => 'classroom_id',
@@ -36,6 +36,8 @@ class ClassroomsManager extends BaseManager{
             ]
         ];
         $cols = ['classroom_id'];
-        return parent::readQuery(self::TABLE, $conditions, $cols);
+        $entity = parent::readQuery(self::TABLE, $conditions, $cols);
+        if(!empty($entity)) return true;
+        return false;
     }
 }
