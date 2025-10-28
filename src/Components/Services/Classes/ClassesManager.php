@@ -1,6 +1,7 @@
 <?php
 require_once __DIR__ . '/../BaseManager.php';
-require_once __DIR__ . '/../../../utils/validator.php';
+require_once __DIR__ . '/../../../utils/DB_helpers.php';
+
 class ClassesManager extends BaseManager{
     private Validator $val;
     private ClassroomsManager $rooms;
@@ -20,21 +21,13 @@ class ClassesManager extends BaseManager{
     public function create(array $data): array{
         $newClass = $data['class_name'];
         $classroomId = $data['class_classroom_id'];
-        $classroom = $this->rooms->findById($classroomId);
-        if(empty($classroom)) return statusError(["The classroom with id $classroomId does not exist"], 400);
-        $class = parent::readQuery(
-            self::TABLE,
-            [
-                [
-                    'column' => 'class_name',
-                    'op' => '=',
-                    'val' => $newClass,
-                    'boolean' => 'AND',
-                ]
-            ],
-            ['class_name']
-        );
-        if(!empty($class)) return statusError(["the parameter $newClass already exists"], 400);
+        if($this->checkExistenceClassByName($newClass)){
+            return statusError(["The classroom $newClass already exists"], 400);
+        } 
+        if($this->rooms->checkExistenceClassroomById($classroomId)){
+            return statusError(["The classroom with id $classroomId does not exist"], 400);
+        } 
+
         return parent::createQuery(self::TABLE, $data);
     }
 
@@ -54,5 +47,22 @@ class ClassesManager extends BaseManager{
         $existingClass = parent::readQuery(self::TABLE, $conditions);
         if(empty($existingClass)) return statusError(['can\'t find the object to delete'], 400);
         return parent::deleteQuery(self::TABLE, $conditions);
+    }
+
+    public function checkExistenceClassByName(string $class){
+        $entity = parent::readQuery(
+            self::TABLE,
+            [
+                [
+                    'column' => 'class_name',
+                    'op' => '=',
+                    'val' => $class,
+                    'boolean' => 'AND',
+                ]
+            ],
+            ['class_name']
+        );
+        if(!empty($entity)) return true;
+        return false;
     }
 }
