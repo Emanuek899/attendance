@@ -43,18 +43,16 @@ class ClassesManager extends BaseManager{
     }
 
     public function update(array $data, array $conditions): array{
+        $existingClass = parent::readQuery(self::TABLE, $conditions);
+        if(empty($existingClass)) return statusError(['can\'t find the object to update'], 400);
         $class = parent::updateQuery(self::TABLE ,$data, $conditions);
-        if(isset($class['details'])){
-            $errors = $this->val->validate(
-                ["DB_Code_Error" => $class],
-                ['DB_Code_Error' => 'DBCodeError']
-            );
-        }
-        if(!empty($errors)) return statusError($errors, 500);
+
         return $class;
     }
 
     public function delete(array $conditions = []): array{
+        $existingClass = parent::readQuery(self::TABLE, $conditions);
+        if(empty($existingClass)) return statusError(['can\'t find the object to delete'], 400);
         return parent::deleteQuery(self::TABLE, $conditions);
     }
 }
