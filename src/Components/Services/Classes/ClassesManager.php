@@ -20,14 +20,13 @@ class ClassesManager extends BaseManager{
      */
     public function create(array $data): array{
         $newClass = $data['class_name'];
-        $classroomId = $data['class_classroom_id'];
-        if($this->checkExistenceClassByName($newClass)){
+        $classroomIdToInsert = $data['class_classroom_id'];
+        if($this->existByName($newClass)){
             return statusError(["The classroom $newClass already exists"], 400);
         } 
-        if($this->rooms->checkExistenceClassroomById($classroomId)){
-            return statusError(["The classroom with id $classroomId does not exist"], 400);
+        if(!$this->rooms->existById($classroomIdToInsert)){
+            return statusError(["The classroom with id $classroomIdToInsert does not exist"], 400);
         } 
-
         return parent::createQuery(self::TABLE, $data);
     }
 
@@ -36,20 +35,20 @@ class ClassesManager extends BaseManager{
     }
 
     public function update(array $data, array $conditions): array{
-        $existingClass = parent::readQuery(self::TABLE, $conditions);
-        if(empty($existingClass)) return statusError(['can\'t find the object to update'], 400);
-        $class = parent::updateQuery(self::TABLE ,$data, $conditions);
-
-        return $class;
+        if(!$this->existByConditions($conditions)){
+            return statusError(['can\'t find the object to update'], 400);
+        } 
+        return parent::updateQuery(self::TABLE ,$data, $conditions);
     }
 
     public function delete(array $conditions = []): array{
-        $existingClass = parent::readQuery(self::TABLE, $conditions);
-        if(empty($existingClass)) return statusError(['can\'t find the object to delete'], 400);
+        if($this->existByConditions($conditions)){
+            return statusError(['can\'t find the object to delete'], 400);
+        }
         return parent::deleteQuery(self::TABLE, $conditions);
     }
 
-    public function checkExistenceClassByName(string $class){
+    public function existByName(string $class){
         $entity = parent::readQuery(
             self::TABLE,
             [
@@ -59,10 +58,15 @@ class ClassesManager extends BaseManager{
                     'val' => $class,
                     'boolean' => 'AND',
                 ]
-            ],
-            ['class_name']
+            ]
         );
         if(!empty($entity)) return true;
         return false;
+    }
+
+    public function existByConditions(array $conditions){
+        $entity = parent::readQuery(self::TABLE, $conditions);
+        if(!empty($entity)) return true;
+        return false; 
     }
 }
