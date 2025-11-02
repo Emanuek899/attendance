@@ -1,0 +1,8 @@
+RewriteEngine On
+
+RewriteBase /attendance/public
+
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+
+RewriteRule ^apiv1/v1/(.*)$ index.php [QSA,L]
