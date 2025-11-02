@@ -1,5 +1,7 @@
 <?php
-require_once __DIR__ . '/../../Core/interfaces/Repo_interfaces/MySQLRepositorieInterface.php';
+namespace Components\Repositories;
+use Core\interfaces\Repo_interfaces\MySQLRepositorieInterface;
+use Components\Database\MySQLdatabase;
 
 class MySQLRepositorie implements MySQLRepositorieInterface{
     private MySQLdatabase $mysql;
@@ -21,6 +23,6 @@ class MySQLRepositorie implements MySQLRepositorieInterface{
     }
 
     public function delete(string $table, array $conditions = []): array{
-        return $this->mysql->delete($table, $conditions);
+        return $this->mysql->table($table)->where($conditions)->delete();
     }
 }
