@@ -1,13 +1,14 @@
 <?php
-require_once __DIR__ . '/../BaseManager.php';
+namespace Components\Services\Classrooms;
+use Components\Services\BaseManager;
+use Components\Repositories\MySQLRepositorie;
+
 require_once __DIR__ . '/../../../utils/validator.php';
 class ClassroomsManager extends BaseManager{
-    private Validator $val;
     const TABLE = 'classrooms';
 
-    public function __construct(MySQLRepositorie $repo, Validator $val){
+    public function __construct(MySQLRepositorie $repo){
         parent::__construct($repo);
-        $this->val = $val;
     }
     
     public function create(array $data): array{
@@ -26,7 +27,7 @@ class ClassroomsManager extends BaseManager{
         return parent::deleteQuery(self::TABLE, $conditions);
     }
 
-    public function checkExistenceClassroomById(int $id){
+    public function existById(int $id){
         $conditions =[
             [
                 'column' => 'classroom_id',
@@ -39,5 +40,40 @@ class ClassroomsManager extends BaseManager{
         $entity = parent::readQuery(self::TABLE, $conditions, $cols);
         if(!empty($entity)) return true;
         return false;
+    }
+
+    public function existBygradeId(int $gradeId){
+        // technical debt, logic is used in existBySectionId and existById refactor pending
+        $conditions =[
+            [
+                'column' => 'classroom_grade_id',
+                'op' => '=',
+                'val' => $gradeId,
+                'boolean' => 'AND',
+            ]
+        ];
+        $cols = ['classroom_grade_id'];
+        $entity = parent::readQuery(self::TABLE, $conditions, $cols);
+        if(!empty($entity)) return true;
+        return false;
+    }    
+
+    public function existBySectionId(int $sectionId){
+        $conditions =[
+            [
+                'column' => 'classroom_section_id',
+                'op' => '=',
+                'val' => $sectionId,
+                'boolean' => 'AND',
+            ]
+        ];
+        $cols = ['classroom_section_id'];
+        $entity = parent::readQuery(self::TABLE, $conditions, $cols);
+        if(!empty($entity)) return true;
+        return false;
+    }   
+    
+    public function getAll(): array{
+        return $this->read();
     }
 }
