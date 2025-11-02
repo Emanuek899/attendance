@@ -1,12 +1,14 @@
 <?php
+namespace Components\DataBase;
+
+use Core\interfaces\Database;
+use \PDO;
+use \PDOException;
 /**
  * MySQL database class implementing Database interface
  * @author Emanuel Santacruz
  * @version 1.0
  */
-require_once __DIR__ . '/../../Core/interfaces/Database.php';
-require_once __DIR__ . '/../../utils/status.php';
-require_once __DIR__ . '/../../utils/Response.php';
 
 class MySQLdatabase implements Database{
     private PDO $pdo;
@@ -96,7 +98,7 @@ class MySQLdatabase implements Database{
             $stmt = $this->pdo->prepare($sql);
             $stmt->execute($this->params);
             $affectedRows = $stmt->rowCount();
-            if($affectedRows == 0) return statusError(['No se encontro el recurso'], 404);
+            if($affectedRows == 0) return status(true, 'nothing modified', '', []);
             return status(true, 'sucesfully uploaded', '', $this->pdo->lastInsertId());
         }catch(PDOException $e){
             $errorCode = $e->getCode();
@@ -114,11 +116,11 @@ class MySQLdatabase implements Database{
             //where clause if conditions is not empty
             if(!empty($this->where)){
                 $delClause = "DELETE FROM $this->table";
-                $where =  $this->whereClause($delClause);
+                $where = $this->whereClause($delClause);
                 $stmt = $this->pdo->prepare($where);
                 $stmt->execute($this->params);
-                if($stmt->rowCount() == 0) return statusError(['cant found the recourse'], 404);
-                return status(true, 'succesfully deleted', '', $this->where);
+                if($stmt->rowCount() == 0) return statusError(['nothing modified'], 404);
+                return status(true, 'succesfully deleted', '', []);
             }else{
                 return statusError(['cant delete without conditions'], 409);
             }
@@ -174,7 +176,7 @@ class MySQLdatabase implements Database{
     /**
      * Stablish the columns of the query
      */
-    public function columns(array $columns){
+    public function columns(array $columns): self{
         $this->columns = $columns;
         return $this;
     }
@@ -182,7 +184,7 @@ class MySQLdatabase implements Database{
     /**
      * [[column => 'columna1', 'op' => '=', 'val' => 1], [...]]
      */
-    public function where(array $conditions){
+    public function where(array $conditions): self{
         foreach($conditions as $condition){
             $this->where[] = [
                 'column'      => $condition['column'], 
