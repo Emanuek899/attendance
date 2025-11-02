@@ -1,5 +1,7 @@
 <?php
-require_once __DIR__ . '/../../utils/status.php';
+namespace Components\Services;
+use Components\Repositories\MySQLRepositorie;
+// require_once __DIR__ . '/../../utils/status.php';
 
 class BaseManager {
 private object $repo;
