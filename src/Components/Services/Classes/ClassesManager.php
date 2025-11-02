@@ -1,15 +1,19 @@
 <?php
-require_once __DIR__ . '/../BaseManager.php';
-require_once __DIR__ . '/../../../utils/DB_helpers.php';
+namespace Components\Services\Classes;
+use Components\Services\BaseManager;
+use Components\Repositories\MySQLRepositorie;
+use Components\Services\Classrooms\ClassroomsManager;
+// require_once __DIR__ . '/../../../utils/DB_helpers.php';
+require_once __DIR__ . '/../../../utils/status.php';
+
+
 
 class ClassesManager extends BaseManager{
-    private Validator $val;
     private ClassroomsManager $rooms;
     const TABLE = 'classes';
 
-    public function __construct(MySQLRepositorie $repo, Validator $val, ClassroomsManager $rooms){
+    public function __construct(MySQLRepositorie $repo, ClassroomsManager $rooms){
         parent::__construct($repo);
-        $this->val = $val;
         $this->rooms = $rooms;
     }
     
@@ -42,25 +46,21 @@ class ClassesManager extends BaseManager{
     }
 
     public function delete(array $conditions = []): array{
-        if($this->existByConditions($conditions)){
-            return statusError(['can\'t find the object to delete'], 400);
+        if(!$this->existByConditions($conditions)){
+            return statusError(['can\'t find the object to delete'], 404);
         }
         return parent::deleteQuery(self::TABLE, $conditions);
     }
 
+    public function existByColumn(string $table, string $column, string $value){
+        $conditions = [['column' => $column, 'op' => '=', 'val' => $value, 'boolean' => 'AND']];
+        $entity = parent::readQuery($table, $conditions, [$column]);
+        if(empty($entity)) return false;
+        return true;
+    }  
+
     public function existByName(string $class){
-        $entity = parent::readQuery(
-            self::TABLE,
-            [
-                [
-                    'column' => 'class_name',
-                    'op' => '=',
-                    'val' => $class,
-                    'boolean' => 'AND',
-                ]
-            ]
-        );
-        if(!empty($entity)) return true;
+        if($this->existByColumn(self::TABLE, 'class_name', $class)) return true;
         return false;
     }
 
