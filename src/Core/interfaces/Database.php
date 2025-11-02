@@ -1,4 +1,5 @@
 <?php
+namespace Core\interfaces;
 /**
  * Database interface to be implemented by database clases
  * @author Emanuel Santacruz
