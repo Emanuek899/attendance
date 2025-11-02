@@ -1,4 +1,5 @@
 <?php
+namespace Core\interfaces\Repo_interfaces;
 interface MySQLRepositorieInterface{
     public function select(string $table, array $conditions, array $cols): array;
     public function insert(string $table, array $data): array;
