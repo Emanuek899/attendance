@@ -1,4 +1,5 @@
 <?php
+namespace Utils;
 class Response{
     public static function response(array $data, int $code): void{
         $status = ($code >= 200 && $code < 300) ? 'success' : 'error';

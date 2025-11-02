@@ -23,3 +23,10 @@ function dbErrorStatus(string $message, string $code){
         'internal_code'  => $code
     ];
 }
+
+function existentEntity(string $entity){
+    return [
+        'details' => "the $entity is regitered yet",
+        'statusCode' => 400
+    ];
+}
