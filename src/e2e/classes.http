@@ -1,0 +1,33 @@
+@BaseApiUrl = http://localhost/attendance/public/apiv1/v1/
+
+### GET all classes
+GET {{BaseApiUrl}}classes
+Content-Type: application/json
+
+### GET classes by id
+GET {{BaseApiUrl}}classes/23
+Content-Type: application/json
+
+### Get by class name
+GET {{BaseApiUrl}}classes/deportes
+Content-Type: application/json
+
+### Add a new class
+POST {{BaseApiUrl}}classes/
+Content-Type: application/json
+
+{
+    "newData": {
+        "class_name": "Fisica Quimica",
+        "class_classroom_id": 1
+    }
+}
+### Add a new class
+PUT {{BaseApiUrl}}classes/5
+Content-Type: application/json
+
+{
+    "updatedData": {
+        "class_name": "informatica a history"
+    }
+}
